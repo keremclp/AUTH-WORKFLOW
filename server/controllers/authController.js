@@ -136,11 +136,27 @@ const forgotPassword = async (req,res)=>{
     user.passwordTokenExpirationDate = passwordTokenExpirationDate;
     await user.save();
   }
-  
+
   res.status(StatusCodes.OK).json({ msg:'Please check your email for reset password link' })
   res.send('forgotPassword')
 }
 const resetPassword = async (req,res)=>{
+  const { email, token, password } = req.body
+  if (!token || !email || !password) {
+    throw new CustomError.BadRequestError("Email already exists");
+  }
+  const user = await User.findOne({ email });
+
+  if (user){
+    const currentDate = new Date()
+
+    if (user.passwordToken === token && user.passwordTokenExpirationDate > currentDate) {
+      user.password = password;
+      user.passwordToken = null;
+      user.passwordTokenExpirationDate = null;
+      await user.save();
+    }
+  }
   res.send('resetPassword')
 }
 
